@@ -46,3 +46,24 @@ func (r commonResult) Extract() (*Project, error) {
 type CreateResult struct {
 	commonResult
 }
+
+type ListReturns struct {
+	gophercloud.Result
+	Links struct {
+		Next     interface{} `json:"next"`
+		Previous interface{} `json:"previous"`
+		Self     string      `json:"self"`
+	} `json:"links"`
+	Projects []struct {
+		IsDomain    bool        `json:"is_domain"`
+		Description interface{} `json:"description"`
+		DomainID    string      `json:"domain_id"`
+		Enabled     bool        `json:"enabled"`
+		ID          string      `json:"id"`
+		Links       struct {
+			Self string `json:"self"`
+		} `json:"links"`
+		Name     string      `json:"name"`
+		ParentID interface{} `json:"parent_id"`
+	} `json:"projects"`
+}
