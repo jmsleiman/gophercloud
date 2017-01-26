@@ -43,7 +43,7 @@ func TestCreateSuccessful(t *testing.T) {
         }`)
 	})
 
-	project := &CreateOpts{
+	project := CreateOpts{
 		IsDomain:    true,
 		Description: "My new project",
 		DomainID:    "default",

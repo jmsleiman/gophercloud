@@ -19,9 +19,9 @@ type CreateOpts struct {
 }
 
 // Create adds a new project using the provieded client.
-func Create(client *gophercloud.ServiceClient, opts *CreateOpts) CreateResult {
+func Create(client *gophercloud.ServiceClient, opts CreateOpts) CreateResult {
 	type request struct {
-		Project *CreateOpts `json:"project"`
+		Project CreateOpts `json:"project"`
 	}
 
 	req := request{Project: opts}
