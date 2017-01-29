@@ -1,6 +1,7 @@
 package roles
 
 import (
+	"github.com/rackspace/gophercloud"
 	"github.com/rackspace/gophercloud/pagination"
 
 	"github.com/mitchellh/mapstructure"
@@ -15,7 +16,9 @@ type RoleAssignment struct {
 }
 
 type Role struct {
-	ID string `json:"id,omitempty"`
+	ID       string `json:"id,omitempty"`
+	Name     string `json:"name,omitempty"`
+	DomainID string `json:"domain_id,omitempty"`
 }
 
 type Scope struct {
@@ -78,4 +81,33 @@ func ExtractRoleAssignments(page pagination.Page) ([]RoleAssignment, error) {
 
 	err := mapstructure.Decode(page.(RoleAssignmentsPage).Body, &response)
 	return response.RoleAssignments, err
+}
+
+type response struct {
+	Role Role `json:"role"`
+}
+
+type commonResult struct {
+	gophercloud.Result
+}
+
+// Extract interprets a CreateResult as a concrete Service.
+// An error is returned if the original call or the extraction failed.
+func (r commonResult) Extract() (*Role, error) {
+	if r.Err != nil {
+		return nil, r.Err
+	}
+
+	var res struct {
+		Role `json:"role"`
+	}
+
+	err := mapstructure.Decode(r.Body, &res)
+
+	return &res.Role, err
+}
+
+// CreateResult the object to hold a role link.
+type CreateResult struct {
+	commonResult
 }

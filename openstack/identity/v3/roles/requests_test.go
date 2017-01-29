@@ -102,3 +102,46 @@ func TestListSinglePage(t *testing.T) {
 		t.Errorf("Expected 1 page, got %d", count)
 	}
 }
+
+func TestCreateSuccessful(t *testing.T) {
+	testhelper.SetupHTTP()
+	defer testhelper.TeardownHTTP()
+
+	testhelper.Mux.HandleFunc("/roles", func(w http.ResponseWriter, r *http.Request) {
+		testhelper.TestMethod(t, r, "POST")
+		testhelper.TestHeader(t, r, "X-Auth-Token", client.TokenID)
+		testhelper.TestJSONRequest(t, r, `{
+			"role": {
+				"domain_id": "92e782c4988642d783a95f4a87c3fdd7",
+				"name": "developer"
+			}
+		}`)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, `{
+			"role": {
+				"domain_id": "92e782c4988642d783a95f4a87c3fdd7",
+				"id": "1e443fa8cee3482a8a2b6954dd5c8f12",
+				"links": {
+					"self": "http://example.com/identity/v3/roles/1e443fa8cee3482a8a2b6954dd5c8f12"
+				},
+				"name": "developer"
+			}
+		}`)
+	})
+
+	role := CreateOpts{
+		DomainID: "92e782c4988642d783a95f4a87c3fdd7",
+		Name:     "developer",
+	}
+
+	result, err := Create(client.ServiceClient(), role).Extract()
+	if err != nil {
+		t.Fatalf("Unexpected error from Create: %v", err)
+	}
+
+	if result.Name != "developer" {
+		t.Errorf("Role name was unexpected [%s]", result.Name)
+	}
+}

@@ -48,3 +48,22 @@ func ListAssignments(client *gophercloud.ServiceClient, opts ListAssignmentsOpts
 
 	return pagination.NewPager(client, url, createPage)
 }
+
+// CreateOpts allows you to create a role
+type CreateOpts struct {
+	DomainID string `json:"domain_id"`
+	Name     string `json:"name"`
+}
+
+// Create adds a new role using the provieded client.
+func Create(client *gophercloud.ServiceClient, opts CreateOpts) CreateResult {
+	type request struct {
+		Role CreateOpts `json:"role"`
+	}
+
+	req := request{Role: opts}
+
+	var result CreateResult
+	_, result.Err = client.Post(listURL(client), req, &result.Body, nil)
+	return result
+}
