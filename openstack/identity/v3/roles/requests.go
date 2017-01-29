@@ -67,3 +67,25 @@ func Create(client *gophercloud.ServiceClient, opts CreateOpts) CreateResult {
 	_, result.Err = client.Post(listURL(client), req, &result.Body, nil)
 	return result
 }
+
+// ListOpts allows you to query the List method.
+type ListOpts struct {
+	Name     string `q:"name"`
+	DomainID string `q:"domain_id"`
+}
+
+// List enumerates the services available to a specific user.
+func List(client *gophercloud.ServiceClient, opts ListOpts) pagination.Pager {
+	u := listURL(client)
+	q, err := gophercloud.BuildQueryString(opts)
+	if err != nil {
+		return pagination.Pager{Err: err}
+	}
+	u += q.String()
+	createPage := func(r pagination.PageResult) pagination.Page {
+		return RolePage{pagination.LinkedPageBase{PageResult: r}}
+	}
+
+	return pagination.NewPager(client, u, createPage)
+}
+

@@ -15,10 +15,16 @@ type RoleAssignment struct {
 	Group Group `json:"group,omitempty"`
 }
 
+// Link the object to hold a project link.
+type Link struct {
+	Self string `json:"self,omitempty"`
+}
+
 type Role struct {
 	ID       string `json:"id,omitempty"`
 	Name     string `json:"name,omitempty"`
 	DomainID string `json:"domain_id,omitempty"`
+	Links    Link   `json:"links"`
 }
 
 type Scope struct {
@@ -110,4 +116,28 @@ func (r commonResult) Extract() (*Role, error) {
 // CreateResult the object to hold a role link.
 type CreateResult struct {
 	commonResult
+}
+
+// RolePage is a single page of Role results.
+type RolePage struct {
+	pagination.LinkedPageBase
+}
+
+// IsEmpty returns true if the page contains no results.
+func (p RolePage) IsEmpty() (bool, error) {
+	roles, err := ExtractRoles(p)
+	if err != nil {
+		return true, err
+	}
+	return len(roles) == 0, nil
+}
+
+// ExtractRoles extracts a slice of Roles from a Collection acquired from List.
+func ExtractRoles(page pagination.Page) ([]Role, error) {
+	var response struct {
+		Roles []Role `mapstructure:"roles"`
+	}
+
+	err := mapstructure.Decode(page.(RolePage).Body, &response)
+	return response.Roles, err
 }

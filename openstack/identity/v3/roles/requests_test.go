@@ -11,7 +11,7 @@ import (
 	"github.com/rackspace/gophercloud/testhelper/client"
 )
 
-func TestListSinglePage(t *testing.T) {
+func TestListSinglePageRA(t *testing.T) {
 	testhelper.SetupHTTP()
 	defer testhelper.TeardownHTTP()
 
@@ -143,5 +143,76 @@ func TestCreateSuccessful(t *testing.T) {
 
 	if result.Name != "developer" {
 		t.Errorf("Role name was unexpected [%s]", result.Name)
+	}
+}
+
+func TestListSinglePage(t *testing.T) {
+	testhelper.SetupHTTP()
+	defer testhelper.TeardownHTTP()
+
+	testhelper.Mux.HandleFunc("/roles", func(w http.ResponseWriter, r *http.Request) {
+		testhelper.TestMethod(t, r, "GET")
+		testhelper.TestHeader(t, r, "X-Auth-Token", client.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		fmt.Fprintf(w, `
+			{
+				"links": {
+					"next": null,
+					"previous": null,
+					"self": "http://example.com/identity/v3/roles"
+				},
+				"roles": [
+					{
+						"id": "5318e65d75574c17bf5339d3df33a5a3",
+						"links": {
+							"self": "http://example.com/identity/v3/roles/5318e65d75574c17bf5339d3df33a5a3"
+						},
+						"name": "admin"
+					},
+					{
+						"id": "9fe2ff9ee4384b1894a90878d3e92bab",
+						"links": {
+							"self": "http://example.com/identity/v3/roles/9fe2ff9ee4384b1894a90878d3e92bab"
+						},
+						"name": "_member_"
+					}
+				]
+			}
+		`)
+	})
+
+	count := 0
+	err := List(client.ServiceClient(), ListOpts{}).EachPage(func(page pagination.Page) (bool, error) {
+		count++
+		actual, err := ExtractRoles(page)
+		if err != nil {
+			return false, err
+		}
+
+		expected := []Role{
+			Role{
+				ID:          "5318e65d75574c17bf5339d3df33a5a3",
+				Name:        "admin",
+				Links:       Link{Self: "http://example.com/identity/v3/roles/5318e65d75574c17bf5339d3df33a5a3"},
+			},
+			Role{
+				ID:          "9fe2ff9ee4384b1894a90878d3e92bab",
+				Name:        "_member_",
+				Links:       Link{Self: "http://example.com/identity/v3/roles/9fe2ff9ee4384b1894a90878d3e92bab"},
+			},
+		}
+
+		if !reflect.DeepEqual(expected, actual) {
+			t.Errorf("Expected %#v, got %#v", expected, actual)
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		t.Errorf("Unexpected error while paging: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("Expected 1 page, got %d", count)
 	}
 }

@@ -7,10 +7,6 @@ import (
 	"github.com/rackspace/gophercloud/pagination"
 )
 
-type response struct {
-	Domain Domain `json:"domains"`
-}
-
 // ListOpts allows you to query the List method.
 type ListOpts struct {
 	Name    string `q:"name"`
