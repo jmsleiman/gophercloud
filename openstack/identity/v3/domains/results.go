@@ -22,7 +22,12 @@ type Domain struct {
 	Enabled     bool   `json:"enabled"`
 	ID          string `json:"id"`
 	Name        string `json:"name"`
-	Links       Link   `json:"self"`
+	Links       Link   `json:"links"`
+}
+
+// PairResult the object to error for failed pairs.
+type PairResult struct {
+	commonResult
 }
 
 // DomainPage is a single page of Domain results.

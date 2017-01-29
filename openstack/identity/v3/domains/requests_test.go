@@ -89,3 +89,25 @@ func TestListSinglePage(t *testing.T) {
 		t.Errorf("Expected 1 page, got %d", count)
 	}
 }
+
+func TestPairDomainGroupAndRole(t *testing.T) {
+	testhelper.SetupHTTP()
+	defer testhelper.TeardownHTTP()
+
+	testhelper.Mux.HandleFunc("/domains/5a75994a383c449184053ff7270c4e91/groups/5a75994a383c449184053ff7270c4e92/roles/5a75994a383c449184053ff7270c4e93", func(w http.ResponseWriter, r *http.Request) {
+		testhelper.TestMethod(t, r, "PUT")
+		testhelper.TestHeader(t, r, "X-Auth-Token", client.TokenID)
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	pair := PairOpts{
+		ID:      "5a75994a383c449184053ff7270c4e91",
+		GroupID: "5a75994a383c449184053ff7270c4e92",
+		RoleID:  "5a75994a383c449184053ff7270c4e93",
+	}
+
+	err := Pair(client.ServiceClient(), pair)
+	if err != nil {
+		t.Fatalf("Unexpected error from Pair: %v", err)
+	}
+}
