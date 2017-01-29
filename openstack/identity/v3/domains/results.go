@@ -16,7 +16,7 @@ type Link struct {
 	Self string `json:"self,omitempty"`
 }
 
-// Domian is main struct for holding domain attributes.
+// Domain is main struct for holding domain attributes.
 type Domain struct {
 	Description string `json:"description,omitempty"`
 	Enabled     bool   `json:"enabled"`
