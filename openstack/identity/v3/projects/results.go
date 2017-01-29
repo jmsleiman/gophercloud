@@ -46,3 +46,8 @@ func (r commonResult) Extract() (*Project, error) {
 type CreateResult struct {
 	commonResult
 }
+
+// PairResult the object to error for failed pairs.
+type PairResult struct {
+	commonResult
+}
