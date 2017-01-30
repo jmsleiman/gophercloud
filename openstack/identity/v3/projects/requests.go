@@ -3,6 +3,7 @@ package projects
 import (
 	"errors"
 	"github.com/rackspace/gophercloud"
+	"github.com/rackspace/gophercloud/pagination"
 )
 
 type response struct {
@@ -53,4 +54,28 @@ func Pair(client *gophercloud.ServiceClient, opts PairOpts) error {
 	var result PairResult
 	_, result.Err = client.Put(pairProjectGroupAndRoleURL(client, opts.ID, opts.GroupID, opts.RoleID), nil, nil, reqOpts)
 	return result.Err
+}
+
+// ListOpts allows you to query the List method.
+type ListOpts struct {
+	Name     string `q:"name"`
+	DomainID string `q:"domain_id"`
+	ParentID string `q:"parent_id"`
+	Enabled  bool   `q:"enabled"`
+	IsDomain bool   `q:"is_domain"`
+}
+
+// List enumerates the projects available to a specific user.
+func List(client *gophercloud.ServiceClient, opts ListOpts) pagination.Pager {
+	u := listURL(client)
+	q, err := gophercloud.BuildQueryString(opts)
+	if err != nil {
+		return pagination.Pager{Err: err}
+	}
+	u += q.String()
+	createPage := func(r pagination.PageResult) pagination.Page {
+		return ProjectPage{pagination.LinkedPageBase{PageResult: r}}
+	}
+
+	return pagination.NewPager(client, u, createPage)
 }

@@ -74,7 +74,7 @@ type ListOpts struct {
 	DomainID string `q:"domain_id"`
 }
 
-// List enumerates the services available to a specific user.
+// List enumerates the roles available to a specific user.
 func List(client *gophercloud.ServiceClient, opts ListOpts) pagination.Pager {
 	u := listURL(client)
 	q, err := gophercloud.BuildQueryString(opts)
