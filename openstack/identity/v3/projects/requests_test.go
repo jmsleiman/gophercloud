@@ -122,5 +122,7 @@ func TestGet(t *testing.T) {
 	}
 
 	result := ListAllProjects(client.ServiceClient(), project).PrettyPrintJSON()
+
+	// need to make sure the output matches what we input
 	fmt.Println(result)
 }
