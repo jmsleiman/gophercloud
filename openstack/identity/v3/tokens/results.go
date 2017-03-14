@@ -108,6 +108,7 @@ func (result CreateResult) ExtractServiceCatalog() (*ServiceCatalog, error) {
 // CreateResult defers the interpretation of a created token.
 // Use ExtractToken() to interpret it as a Token, or ExtractServiceCatalog() to interpret it as a service catalog.
 type CreateResult struct {
+	UserID string
 	commonResult
 }
 

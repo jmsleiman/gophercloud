@@ -68,6 +68,10 @@ type ProviderClient struct {
 	// fails with a 401 HTTP response code. This a needed because there may be multiple
 	// authentication functions for different Identity service versions.
 	ReauthFunc func() error
+
+	// UserID is a temporary measure to get the user's ID recorded somewhere.
+	// Since this does not seem to be accessible in normal operations...
+	UserID string
 }
 
 // AuthenticatedHeaders returns a map of HTTP headers that are common for all
@@ -187,7 +191,7 @@ func (client *ProviderClient) Request(method, url string, options RequestOpts) (
 
 	// Set connection parameter to close the connection immediately when we've got the response
 	req.Close = true
-	
+
 	// Issue the request.
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {

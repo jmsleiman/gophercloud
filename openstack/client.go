@@ -192,6 +192,7 @@ func v3auth(client *gophercloud.ProviderClient, endpoint string, options gopherc
 	}
 
 	client.TokenID = token.ID
+	client.UserID = result.UserID
 
 	if options.AllowReauth {
 		client.ReauthFunc = func() error {
