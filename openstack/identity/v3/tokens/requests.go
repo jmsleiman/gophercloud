@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/rackspace/gophercloud"
 )
 
@@ -243,26 +244,7 @@ func Create(c *gophercloud.ServiceClient, options AuthOptionsV3er, scope *Scope)
 		return resp
 	}
 
-	// need this hack to break out the user_id field.
-	auto := struct {
-		Token struct {
-			AuditIds  []string  `json:"audit_ids"`
-			ExpiresAt time.Time `json:"expires_at"`
-			IssuedAt  time.Time `json:"issued_at"`
-			Methods   []string  `json:"methods"`
-			User      struct {
-				Domain struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"domain"`
-				ID   string `json:"id"`
-				Name string `json:"name"`
-			} `json:"user"`
-		} `json:"token"`
-	}{}
-
-	result := CreateResult{}
-	result.Body = &auto
+	var result CreateResult
 
 	var response *http.Response
 	response, result.Err = c.Post(tokenURL(c), request, &result.Body, nil)
@@ -270,9 +252,34 @@ func Create(c *gophercloud.ServiceClient, options AuthOptionsV3er, scope *Scope)
 		return result
 	}
 
-	result.Header = response.Header
-	result.UserID = auto.Token.User.ID
+	auto := struct {
+		Token struct {
+			AuditIds  []string  `json:"audit_ids",mapstructure:"audit_ids"`
+			ExpiresAt time.Time `json:"expires_at",mapstructure:"expires_at"`
+			IssuedAt  time.Time `json:"issued_at",mapstructure:"issued_at"`
+			Methods   []string  `json:"methods",mapstructure:"methods"`
+			User      struct {
+				Domain struct {
+					ID   string `json:"id",mapstructure:"id"`
+					Name string `json:"name",mapstructure:"name"`
+				} `json:"domain",mapstructure:"domain"`
+				ID   string `json:"id",mapstructure:"id"`
+				Name string `json:"name",mapstructure:"name"`
+			} `json:"user",mapstructure:"user"`
+		} `json:"token",mapstructure:"token"`
+	}{}
 
+	mapped, ok := result.Body.(map[string]interface{})
+
+	if ok {
+		decodeErr := mapstructure.Decode(&mapped, &auto)
+
+		if decodeErr != nil {
+			result.UserID = auto.Token.User.ID
+		}
+	}
+
+	result.Header = response.Header
 	return result
 }
 
