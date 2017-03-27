@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
-
 	"github.com/rackspace/gophercloud"
 	tokens2 "github.com/rackspace/gophercloud/openstack/identity/v2/tokens"
 	tokens3 "github.com/rackspace/gophercloud/openstack/identity/v3/tokens"
@@ -153,16 +151,10 @@ func AuthenticateV3(client *gophercloud.ProviderClient, options gophercloud.Auth
 }
 
 func v3auth(client *gophercloud.ProviderClient, endpoint string, options gophercloud.AuthOptions) error {
-	ctx := log.WithFields(log.Fields{
-		"funcName": "v3auth",
-	})
-
 	// Override the generated service endpoint with the one returned by the version endpoint.
 	v3Client := NewIdentityV3(client)
 	if endpoint != "" {
 		v3Client.Endpoint = endpoint
-
-		ctx.Warn("place 1")
 	}
 
 	// copy the auth options to a local variable that we can change. `options`
@@ -171,8 +163,6 @@ func v3auth(client *gophercloud.ProviderClient, endpoint string, options gopherc
 
 	var scope *tokens3.Scope
 	if options.TenantID != "" {
-		ctx.Warn("2")
-
 		scope = &tokens3.Scope{
 			ProjectID: options.TenantID,
 		}
@@ -181,7 +171,6 @@ func v3auth(client *gophercloud.ProviderClient, endpoint string, options gopherc
 		v3Options.TenantName = ""
 	} else {
 		if options.TenantName != "" {
-			ctx.Warn("4")
 			scope = &tokens3.Scope{
 				ProjectName: options.TenantName,
 				DomainID:    options.DomainID,
@@ -189,45 +178,38 @@ func v3auth(client *gophercloud.ProviderClient, endpoint string, options gopherc
 			}
 			v3Options.TenantName = ""
 		}
-		ctx.Warn("3")
 	}
 
 	result := tokens3.Create(v3Client, tokens3.AuthOptions{AuthOptions: v3Options}, scope)
 
 	token, err := result.ExtractToken()
 	if err != nil {
-		ctx.WithField("err", err).Warn("5")
 		return err
 	}
 
 	catalog, err := result.ExtractServiceCatalog()
 	if err != nil {
-		ctx.Warn("6")
 		return err
 	}
 
 	client.TokenID = token.ID
 
 	if id, err := result.ExtractUserID(); err != nil {
-		ctx.Warn("6 of one, dozen of another")
 		return err
 	} else {
 		client.UserID = id
 	}
 
 	if options.AllowReauth {
-		ctx.Warn("7")
 		client.ReauthFunc = func() error {
 			client.TokenID = ""
 			return v3auth(client, endpoint, options)
 		}
 	}
 	client.EndpointLocator = func(opts gophercloud.EndpointOpts) (string, error) {
-		ctx.Warn("8")
 		return V3EndpointURL(catalog, opts)
 	}
 
-	ctx.Warn("9")
 	return nil
 }
 
