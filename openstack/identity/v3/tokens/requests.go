@@ -2,7 +2,8 @@ package tokens
 
 import (
 	"net/http"
-	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/rackspace/gophercloud"
 )
@@ -234,44 +235,43 @@ func (options AuthOptions) ToAuthOptionsV3Map(c *gophercloud.ServiceClient, scop
 
 // Create authenticates and either generates a new token, or changes the Scope of an existing token.
 func Create(c *gophercloud.ServiceClient, options AuthOptionsV3er, scope *Scope) CreateResult {
+	context := log.WithFields(log.Fields{
+		"func":    "gophercloud/Create",
+		"options": options,
+		"scope":   scope,
+		"client":  c,
+	})
+
 	request, err := options.ToAuthOptionsV3Map(c, scope)
 	if err != nil {
 		resp := CreateResult{
 			commonResult: commonResult{gophercloud.Result{Err: err}},
 			UserID:       "",
 		}
+
+		context.WithField("err", err).Warn("wat1")
+
 		return resp
 	}
 
 	// need this hack to break out the user_id field.
-	auto := struct {
-		Token struct {
-			AuditIds  []string  `json:"audit_ids"`
-			ExpiresAt time.Time `json:"expires_at"`
-			IssuedAt  time.Time `json:"issued_at"`
-			Methods   []string  `json:"methods"`
-			User      struct {
-				Domain struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"domain"`
-				ID   string `json:"id"`
-				Name string `json:"name"`
-			} `json:"user"`
-		} `json:"token"`
-	}{}
+
+	// auto := struct{}{}
 
 	result := CreateResult{}
-	result.Body = &auto
+	// result.Body = &auto
 
 	var response *http.Response
 	response, result.Err = c.Post(tokenURL(c), request, &result.Body, nil)
 	if result.Err != nil {
+		context.WithField("err", err).Warn("wat2")
 		return result
 	}
 
 	result.Header = response.Header
-	result.UserID = auto.Token.User.ID
+	// result.UserID = auto.Token.User.ID
+
+	context.WithField("err", err).WithField("result", result).Warn("wat3")
 
 	return result
 }

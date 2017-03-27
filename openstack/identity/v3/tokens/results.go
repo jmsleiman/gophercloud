@@ -3,6 +3,9 @@ package tokens
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+	"reflect"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/rackspace/gophercloud"
 )
@@ -57,9 +60,58 @@ func (r commonResult) Extract() (*Token, error) {
 	return r.ExtractToken()
 }
 
-// ExtractToken interprets a commonResult as a Token.
+// ExtractUserID to get the userID encoded in a commonResult response.
+func (r commonResult) ExtractUserID() (string, error) {
+	if r.Err != nil {
+		log.WithFields(log.Fields{
+			"funcName": "ExtractToken",
+			"err":      r.Err,
+		}).Warn("dumbo 1")
+		return "", r.Err
+	}
+
+	var response struct {
+		Token struct {
+			AuditIds []string `mapstructure:"audit_ids"`
+			Methods  []string `mapstructure:"methods"`
+			User     struct {
+				Domain struct {
+					ID   string `mapstructure:"id"`
+					Name string `mapstructure:"name"`
+				} `mapstructure:"domain"`
+				ID   string `mapstructure:"id"`
+				Name string `mapstructure:"name"`
+			} `mapstructure:"user"`
+		} `mapstructure:"token"`
+	}
+
+	err := mapstructure.Decode(r.Body, &response)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"funcName": "ExtractToken",
+			"err":      err,
+			"body":     reflect.TypeOf(r.Body),
+			"resp":     reflect.TypeOf(response),
+		}).Warn("dumbo 2")
+		return "", err
+	}
+
+	log.WithFields(log.Fields{
+		"funcName": "ExtractToken",
+		"err":      err,
+	}).Warn("dumbo 3")
+
+	return response.Token.User.ID, err
+
+}
+
+// ExtractToken extracts a token from a response of type commonResult.
 func (r commonResult) ExtractToken() (*Token, error) {
 	if r.Err != nil {
+		log.WithFields(log.Fields{
+			"funcName": "ExtractToken",
+			"err":      r.Err,
+		}).Warn("jumbo 1")
 		return nil, r.Err
 	}
 
@@ -76,11 +128,22 @@ func (r commonResult) ExtractToken() (*Token, error) {
 
 	err := mapstructure.Decode(r.Body, &response)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"funcName": "ExtractToken",
+			"err":      err,
+			"body":     reflect.TypeOf(r.Body),
+			"resp":     reflect.TypeOf(response),
+		}).Warn("jumbo 2")
 		return nil, err
 	}
 
 	// Attempt to parse the timestamp.
 	token.ExpiresAt, err = time.Parse(gophercloud.RFC3339Milli, response.Token.ExpiresAt)
+
+	log.WithFields(log.Fields{
+		"funcName": "ExtractToken",
+		"err":      err,
+	}).Warn("jumbo 3")
 
 	return &token, err
 }
